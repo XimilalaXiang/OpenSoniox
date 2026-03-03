@@ -40,7 +40,7 @@ docker compose logs -f
 
 ## 第三步：配置应用
 
-1. 打开浏览器访问 `http://localhost:10081`
+1. 打开浏览器访问 `http://localhost:17881`
 2. 点击右上角"配置"按钮
 3. 输入你的 Soniox API Key
 4. （可选）配置 OpenAI API 用于 AI 助手功能

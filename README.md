@@ -1,448 +1,71 @@
 # Soniox 实时转录平台
 
-基于 Soniox V4 API 的专业实时语音转文字平台，支持发言人识别和 AI 智能分析。
+基于 Soniox V4 的实时语音转录工具，支持发言人识别、历史记录与 AI 总结问答。
 
-## ✨ 功能特性
+## 功能简介
 
-- 🎤 **实时语音转录**：基于 Soniox V4 的高精度实时转录
-- 👥 **发言人识别**：自动识别和区分不同的发言人
-- 🌊 **流式显示**：实时显示转录内容，低延迟体验
-- 🧠 **语义端点检测**：基于上下文和语义智能判断发言结束，避免误打断
-- 🌍 **60+ 语言支持**：跨语言母语级精度，无需切换模型
-- 🔄 **实时语音翻译**：支持 3,600+ 语言对的流式翻译
-- 🤖 **AI 智能助手**：支持 OpenAI 兼容 API 进行会议总结和问答
-- 💾 **云端存储**：自动保存所有转录记录到服务器数据库
-- 📚 **历史记录**：查看、搜索和管理所有历史会话
-- 📤 **多格式导出**：支持导出为 TXT、JSON、Markdown 格式
-- 🔍 **全文搜索**：在历史记录中快速搜索关键词
-- 🎨 **现代化 UI**：简洁的黑白配色，专业的用户界面
-- 📱 **响应式设计**：支持桌面和移动设备访问
-- 🐳 **容器化部署**：支持 Docker 一键部署
+- 实时语音转录（低延迟流式显示）
+- 发言人识别（多说话人区分）
+- 历史会话保存、搜索、导出（TXT/JSON/Markdown）
+- AI 总结与问答（OpenAI 兼容接口）
 
-## 🏗️ 技术架构
+## 部署方式
 
-### 后端
-- **框架**：FastAPI (Python 3.11+)
-- **实时通信**：WebSocket
-- **数据库**：SQLite (SQLAlchemy ORM)
-- **语音识别**：Soniox V4 API
-- **AI 集成**：OpenAI 兼容 API
+### 方式 1：使用 GHCR 预构建镜像（推荐，适合 1Panel）
 
-### 前端
-- **框架**：Vue 3 + Vite
-- **状态管理**：Pinia
-- **样式**：Tailwind CSS
-- **路由**：Vue Router
+镜像地址：
 
-## 📋 系统要求
+- 前端：`ghcr.io/ximilalaxiang/opensoniox-frontend:latest`
+- 后端：`ghcr.io/ximilalaxiang/opensoniox-backend:latest`
 
-- Ubuntu 20.04+ 或其他 Linux 发行版
-- Docker 20.10+ 和 Docker Compose
-- 或者：Python 3.11+ 和 Node.js 20+（用于本地开发）
+可直接使用下面的 `compose`（把 `SECRET_KEY` 改成你自己的随机字符串）：
 
-## 🚀 快速开始
+```yaml
+services:
+  backend:
+    image: ghcr.io/ximilalaxiang/opensoniox-backend:latest
+    container_name: soniox-backend
+    restart: unless-stopped
+    expose:
+      - "17661"
+    volumes:
+      - /opt/soniox/data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=sqlite+aiosqlite:///./data/transcriptions.db
+      - SECRET_KEY=replace-with-a-long-random-secret
+      - ACCESS_PASSWORD=
 
-### 方式一：Docker 部署（推荐）
+  frontend:
+    image: ghcr.io/ximilalaxiang/opensoniox-frontend:latest
+    container_name: soniox-frontend
+    restart: unless-stopped
+    ports:
+      - "17881:80"
+    depends_on:
+      - backend
+```
 
-镜像已通过 GitHub Actions 自动构建并推送到 GHCR，无需本地编译。
+启动：
 
-1. **克隆项目**
+```bash
+docker compose pull
+docker compose up -d
+```
+
+### 方式 2：本地源码构建后部署
+
 ```bash
 git clone https://github.com/XimilalaXiang/Soniox.git
 cd Soniox
+docker compose -f docker-compose.dev.yml up -d --build
 ```
 
-2. **准备环境变量（首次必做）**
-```bash
-cp .env.example .env
-# 编辑 .env，至少设置 SECRET_KEY
-```
+访问地址：`http://localhost:17881`
 
-3. **拉取镜像并启动**
-```bash
-docker compose pull
-docker compose up -d
-```
+常用命令：
 
-或者使用一键脚本：
 ```bash
-./start.sh
-```
-
-4. **访问应用**
-打开浏览器访问 `http://localhost:10081` 或 `http://your-server-ip:10081`
-
-5. **更新到最新版本**
-```bash
-docker compose pull
-docker compose up -d
-```
-
-6. **回滚到指定镜像版本（可选）**
-```bash
-# 示例：回滚到某次 CI 产出的提交标签
-SONIOX_IMAGE_TAG=sha-<commit_sha> docker compose pull
-SONIOX_IMAGE_TAG=sha-<commit_sha> docker compose up -d
-```
-
-7. **停止服务**
-```bash
+docker compose logs -f
 docker compose down
 ```
-
-### 方式二：本地开发部署
-
-> 如需修改代码并本地构建镜像，请使用 `docker-compose.dev.yml`：
-> ```bash
-> docker compose -f docker-compose.dev.yml up -d --build
-> ```
-
-#### 后端设置
-
-1. **进入后端目录**
-```bash
-cd backend
-```
-
-2. **创建虚拟环境**
-```bash
-python3 -m venv venv
-source venv/bin/activate  # Linux/Mac
-# 或 venv\Scripts\activate  # Windows
-```
-
-3. **安装依赖**
-```bash
-pip install -r requirements.txt
-```
-
-4. **启动后端服务**
-```bash
-python main.py
-# 或者
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-后端服务将在 `http://localhost:8000` 运行
-
-#### 前端设置
-
-1. **进入前端目录**
-```bash
-cd frontend
-```
-
-2. **安装依赖**
-```bash
-npm install
-```
-
-3. **启动开发服务器**
-```bash
-npm run dev
-```
-
-前端服务将在 `http://localhost:3000` 运行
-
-4. **构建生产版本**
-```bash
-npm run build
-```
-
-## 📦 Android APK（Docker 架构不变）
-
-已支持在保留现有 Docker 部署的情况下，新增 Android APK 壳应用版本。
-
-- 现有后端、数据库、WebSocket 和 API 路径不变
-- APK 通过 HTTPS 访问你当前部署的站点
-- 打包说明见：[frontend/ANDROID_APK.md](./frontend/ANDROID_APK.md)
-
-## ⚙️ 配置说明
-
-### Soniox API 配置
-
-1. 访问 [Soniox Console](https://soniox.com/console) 创建账户
-2. 在项目中创建 API Key
-3. 在应用的配置面板中输入 API Key
-
-**配置项：**
-- `API Key`：你的 Soniox API 密钥
-- `模型`：固定使用 `stt-rt-v4`
-- `语义端点检测`：是否启用智能断句
-- `端点等待上限`：`500-3000ms`，用于平衡响应速度与停顿容忍
-- `发言人识别`：启用后可以自动识别不同的发言人
-
-### OpenAI API 配置
-
-用于会议总结和智能问答功能。
-
-**配置项：**
-- `API URL`：OpenAI 兼容的 API 地址
-  - OpenAI：`https://api.openai.com/v1`
-  - 其他兼容服务：根据服务提供商文档配置
-- `API Key`：你的 API 密钥
-- `模型`：模型 ID（如 `gpt-4o-mini`, `gpt-4`, `gpt-3.5-turbo` 等）
-
-**支持的 OpenAI 兼容服务：**
-- OpenAI
-- Azure OpenAI
-- 其他兼容 OpenAI API 格式的服务
-
-## 📖 使用指南
-
-### 1. 配置 API
-
-首次使用时，点击右上角的"配置"按钮，输入：
-- Soniox API Key
-- OpenAI API 配置（可选）
-
-配置会自动保存在浏览器本地。
-
-### 2. 开始录音
-
-1. 点击"开始录音"按钮
-2. 浏览器会请求麦克风权限，请允许
-3. 开始说话，转录内容会实时显示
-4. 不同的发言人会用不同的颜色区分
-
-### 3. 控制录音
-
-- **完成当前句**：强制完成当前正在识别的句子
-- **停止录音**：结束录音会话
-- **清空**：清空当前的转录内容
-
-### 4. 使用 AI 助手
-
-录音完成后，可以使用 AI 助手功能：
-
-**快捷操作：**
-- 📝 总结要点
-- 📋 按主题总结
-- ✅ 提取待办事项
-
-**自定义提问：**
-在输入框中输入任何问题，AI 会基于转录内容回答。
-
-### 5. 查看历史记录
-
-所有的转录会话会自动保存到服务器数据库中。
-
-1. 点击右上角的"历史记录"按钮
-2. 浏览所有历史会话
-3. 使用搜索框查找特定内容
-4. 点击"查看详情"查看完整转录
-
-**历史记录功能：**
-- 📊 显示会话统计信息（时长、发言人数、字数等）
-- 🔍 全文搜索功能
-- ✏️ 编辑会话标题
-- 🗑️ 删除不需要的会话
-- 📄 分页浏览
-
-### 6. 导出转录内容
-
-支持多种格式导出：
-
-**导出方式：**
-1. 在历史记录页面，点击会话的"导出"按钮
-2. 或在会话详情页面点击"导出"按钮
-3. 选择导出格式：
-   - **TXT**：纯文本格式，适合快速阅读
-   - **JSON**：结构化数据，包含完整的元数据和时间戳
-   - **Markdown**：格式化文档，包含 AI 总结和待办事项
-
-**导出内容包含：**
-- 会话标题和日期
-- 完整转录内容（按发言人分组）
-- 时间戳信息
-- AI 总结（如果已生成）
-- AI 待办事项（如果已生成）
-- 统计信息
-
-## 🔧 高级配置
-
-### 修改端口
-
-**Docker 部署：**
-编辑 `docker-compose.yml` 文件：
-```yaml
-services:
-  frontend:
-    ports:
-      - "8080:80"  # 修改为你想要的端口
-```
-
-**本地开发：**
-- 后端：修改 `backend/main.py` 中的端口参数
-- 前端：修改 `frontend/vite.config.js` 中的 `server.port`
-
-### 数据库备份
-
-转录数据存储在 SQLite 数据库文件 `backend/transcriptions.db` 中。
-
-**备份方法：**
-```bash
-# 停止服务
-docker-compose down
-
-# 备份数据库
-cp backend/transcriptions.db backend/transcriptions.db.backup
-
-# 或使用时间戳
-cp backend/transcriptions.db backend/transcriptions.db.$(date +%Y%m%d_%H%M%S)
-
-# 重启服务
-docker-compose up -d
-```
-
-**恢复数据：**
-```bash
-docker-compose down
-cp backend/transcriptions.db.backup backend/transcriptions.db
-docker-compose up -d
-```
-
-**定时备份（可选）：**
-```bash
-# 添加到 crontab
-0 2 * * * cp /path/to/backend/transcriptions.db /path/to/backup/transcriptions.db.$(date +\%Y\%m\%d)
-```
-
-### 启用 HTTPS
-
-对于生产环境，建议使用 Nginx 或 Caddy 作为反向代理并配置 SSL 证书。
-
-**Nginx 示例配置：**
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name your-domain.com;
-
-    ssl_certificate /path/to/cert.pem;
-    ssl_certificate_key /path/to/key.pem;
-
-    location / {
-        proxy_pass http://localhost:80;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-
-    location /ws/ {
-        proxy_pass http://localhost:80/ws/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "Upgrade";
-    }
-}
-```
-
-## 🐛 常见问题
-
-### 1. 无法连接到后端
-
-**检查：**
-- 后端服务是否正常运行
-- 防火墙是否允许端口访问
-- 浏览器控制台是否有错误信息
-
-### 2. 麦克风无法使用
-
-**检查：**
-- 浏览器是否有麦克风权限
-- 必须使用 HTTPS 或 localhost（浏览器安全策略）
-- 系统麦克风设备是否正常
-
-### 3. WebSocket 连接失败
-
-**检查：**
-- Nginx 配置是否正确设置了 WebSocket 代理
-- 防火墙是否允许 WebSocket 连接
-- 浏览器是否支持 WebSocket
-
-### 4. Soniox API 错误
-
-**常见原因：**
-- API Key 无效或过期
-- 账户配额不足
-- 网络连接问题
-
-### 5. OpenAI API 错误
-
-**常见原因：**
-- API Key 无效
-- API URL 配置错误
-- 模型 ID 不存在或无权访问
-
-## 📊 系统监控
-
-### 查看日志
-
-**Docker 部署：**
-```bash
-# 查看后端日志
-docker logs soniox-backend
-
-# 查看前端日志
-docker logs soniox-frontend
-
-# 实时跟踪日志
-docker logs -f soniox-backend
-```
-
-**本地部署：**
-- 后端日志会直接输出到终端
-- 前端日志在浏览器开发者工具中查看
-
-## 🔒 安全建议
-
-1. **不要在客户端暴露 API Key**
-   - 当前实现将配置存储在浏览器本地
-   - 生产环境建议在后端管理 API Key
-
-2. **使用 HTTPS**
-   - 生产环境必须使用 HTTPS
-   - 保护 WebSocket 通信安全
-
-3. **限制访问**
-   - 配置防火墙规则
-   - 使用身份验证（可扩展实现）
-
-## 🛣️ 路线图
-
-- [ ] 用户认证和授权
-- [x] 会话历史保存到数据库
-- [x] 导出转录内容（TXT, PDF, JSON）
-- [ ] 支持上传音频文件转录
-- [ ] 多语言界面支持
-- [ ] 自定义发言人标签
-- [x] 实时翻译功能（Soniox V4 原生支持）
-- [ ] 语义端点检测参数可视化配置
-- [ ] 手动 finalize 控制（push-to-talk 模式）
-
-## 📄 许可证
-
-MIT License
-
-## 🤝 贡献
-
-欢迎提交 Issue 和 Pull Request！
-
-## 📞 支持
-
-如有问题，请：
-1. 查看文档和常见问题
-2. 搜索已有的 Issue
-3. 创建新的 Issue
-
-## 🙏 致谢
-
-- [Soniox](https://soniox.com) - 提供优秀的语音识别 API
-- [Vue.js](https://vuejs.org) - 前端框架
-- [FastAPI](https://fastapi.tiangolo.com) - 后端框架
-- [Tailwind CSS](https://tailwindcss.com) - CSS 框架
-
-## 📚 相关链接
-
-- [Soniox 官方文档](https://soniox.com/docs)
-- [Soniox API 参考](https://soniox.com/docs/stt/api-reference)
-- [OpenAI API 文档](https://platform.openai.com/docs)
