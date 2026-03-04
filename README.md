@@ -34,7 +34,7 @@ services:
       - PYTHONUNBUFFERED=1
       - DATABASE_URL=sqlite+aiosqlite:///./data/transcriptions.db
       - SECRET_KEY=replace-with-a-long-random-secret
-      - ACCESS_PASSWORD=
+      - ACCESS_PASSWORD=opensoniox123
 
   frontend:
     image: ghcr.io/ximilalaxiang/opensoniox-frontend:latest
@@ -49,6 +49,11 @@ services:
 启动：
 
 ```bash
+# 如果使用仓库自带 docker-compose.yml，首次运行请先准备 .env
+cp .env.example .env
+# 编辑 .env，至少修改 SECRET_KEY（ACCESS_PASSWORD 默认 opensoniox123，建议改成自己的）
+# 如需首次进入网页时手动初始化密码，可将 ACCESS_PASSWORD 置空
+
 docker compose pull
 docker compose up -d
 ```
@@ -58,6 +63,8 @@ docker compose up -d
 ```bash
 git clone https://github.com/XimilalaXiang/OpenSoniox.git
 cd OpenSoniox
+cp .env.example .env
+# 编辑 .env，至少修改 SECRET_KEY（ACCESS_PASSWORD 默认 opensoniox123，建议改成自己的）
 docker compose -f docker-compose.dev.yml up -d --build
 ```
 
